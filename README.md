@@ -119,4 +119,5 @@ mechanisms, evidence systems/producers and review/qualification gates. A concret
 current capability must need the mechanism **and** its authorized contract/budget
 must permit it. A possible future consumer or an AI-written proposal is not
 permission. Prefer the smallest sufficient change and stop when its contract is
-satisfied. B0 ends at DEV Technical Review; do not begin B1 in this lineage.
+satisfied. B0 ends with the documented technical review described in
+[AGENTS.md](AGENTS.md); do not begin B1 in this lineage.

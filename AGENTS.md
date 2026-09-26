@@ -24,12 +24,16 @@ they do not replace `aidumo-suite` governance.
 5. Run checks proportional to the actual change. For B0 use the README's local
    checks and inspect all #2 acceptance criteria against a clean clone. Do not
    introduce a test framework, CI workflow or governance tree to validate prose.
-6. CODEX implements and self-checks; DEV independently performs Technical Review
-   against the contract and exact candidate. The PR handoff must state the exact
-   full head SHA, changed files with rationale, performed checks/results, scope
-   exclusions and genuine remaining blockers. A self-check is not a DEV PASS.
+6. For the current B0 assignment, CODEX implements, self-checks and performs a
+   separate technical review pass against the contract and exact candidate. The
+   user explicitly assigned solo execution because no DEV reviewer is available.
+   Report this as same-agent technical review, never as an independent DEV PASS;
+   this B0 arrangement does not waive review requirements for future packages.
+   The PR handoff must state the exact full head SHA, changed files with
+   rationale, performed checks/results, scope
+   exclusions and genuine remaining blockers.
    Keep GitHub issue/PR evidence canonical; no local readiness/review ledger.
 
-For B0, stop after delivering the qualified canonical PR for **DEV Technical
-Review**. Do not merge, grant Product acceptance, change repository settings or
+For B0, stop after recording the technical review in the qualified canonical PR.
+Do not merge, grant Product acceptance, change repository settings or
 activate infrastructure as part of that handoff.
