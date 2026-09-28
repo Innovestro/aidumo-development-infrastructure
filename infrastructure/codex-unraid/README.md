@@ -5,7 +5,8 @@ is integrated at `733197b8619a1b5d731131383ac0eade70e3c566`. This runbook adopts
 standing GitHub access under [#10](https://github.com/Innovestro/aidumo-development-infrastructure/issues/10)
 and the current Owner decisions in [#1](https://github.com/Innovestro/aidumo-development-infrastructure/issues/1).
 One linux/amd64 container executes manually admitted tasks; no dispatch, queue
-or other agents. Unraid is `192.168.40.10`; neither qualification VM is used.
+or other agents. Unraid is `192.168.40.10`. The first #5 stage adds only
+bounded Linux guest SSH; qualification and VM lifecycle remain unimplemented.
 A submitted task runs on Unraid even when the Owner laptop is off.
 
 ## Layout and limits
@@ -37,6 +38,8 @@ A submitted task runs on Unraid even when the Owner laptop is off.
 | `secrets/git_key` | `/run/secrets/git_key` | read-only standing B deploy key |
 | `secrets/git_key_suite` | `/run/secrets/git_key_suite` | read-only standing Suite deploy key |
 | `secrets/gh_token` | `/run/secrets/gh_token` | read-only standing PR/issue token |
+| `secrets/linux_vm_key` | `/run/secrets/linux_vm_key` | read-only dedicated Linux guest key |
+| `secrets/linux_vm_known_hosts` | `/run/secrets/linux_vm_known_hosts` | read-only Owner-pinned Linux host key |
 
 No NAS root, Owner home, host SSH directory, Unraid flash or other appdata is
 mounted. Persistent data lives outside the configuration checkout. Do not share
@@ -103,7 +106,8 @@ The protected host secrets are already provisioned:
 
 Do not read, print or copy secret values into Git, prompts or logs. The Owner
 maintains files owned by UID/GID 1000 with mode 600 under the private secrets
-directory. `create` requires all three files and mounts them individually
+directory. `create` requires these three files plus the two Linux guest files
+described below and mounts them individually
 read-only. Retain the existing credentials between normal admitted packages;
 rotate for expiry, compromise or an Owner-directed access change, not per task.
 No new rulesets or changes to existing protections are required by #10. The
@@ -250,7 +254,7 @@ the storage budget and is never automatically deleted.
   the executor lock. GitHub tools in this shell do not automatically receive
   the PR token; the task invocation injects it.
 - Recreation: drain/stop, save the qualified image ID, remove only the stopped
-  container, then `create` using the same six mounts and image. Never use a
+  container, then `create` using the reviewed mounts and image. Never use a
   volume-delete command. Reauthenticate only if auth actually expired/revoked.
 - Rollback on Unraid: `./unraid.sh stop`, then
   `docker rm aidumo-codex` removes only this stopped container. Retain its private
@@ -261,7 +265,10 @@ the storage budget and is never automatically deleted.
   A later package needs explicit admission; no per-package key/PAT recreation,
   revocation or temporary branch ruleset is required.
 
-## #10 Owner deployment gate — existing container
+## Historical #10 Owner deployment gate — completed
+
+For current recreation use the #5 procedure below. This section records the
+previous deployment using #10 source, which did not require Linux guest files.
 
 The old running container lacks the Suite key mount and alias. Static checks
 and B branch/API proof cannot establish real Suite Git transport. After the
@@ -332,3 +339,88 @@ Sources: [OpenAI authentication](https://learn.chatgpt.com/docs/auth),
 [merge permissions](https://docs.github.com/en/rest/pulls/pulls#merge-a-pull-request),
 [release permissions](https://docs.github.com/en/rest/releases/releases#create-a-release),
 [deploy keys](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/managing-deploy-keys).
+
+## #5 first stage — bounded Linux guest SSH
+
+[#5](https://github.com/Innovestro/aidumo-development-infrastructure/issues/5)
+consumes the existing `aidumo-linux-runner-01`: Owner-reported Ubuntu Server
+26.04.1 LTS, kernel `7.0.0-34-generic`, UID/GID 1000 `aidumo` in `sudo`.
+It remains a DHCP client reserved at `192.168.40.130`. This stage installs no
+packages, runner or toolchain and performs no VM lifecycle/reset operations.
+Guest sudo membership is existing guest authority, not Unraid host authority.
+No Unraid root credentials, Docker/libvirt socket/API or broad NAS mount is added.
+
+Inside the recreated CODEX container, use exactly:
+
+```bash
+ssh -F /etc/codex-ssh.conf aidumo@192.168.40.130 'hostname; id; uname -r'
+```
+
+The alias `aidumo-linux-runner-01` selects the same endpoint. Always supply `-F`:
+`GIT_SSH_COMMAND` applies to Git, not ordinary SSH. The guest entry selects only
+`/run/secrets/linux_vm_key`, disables agent and password fallback and forwarding,
+and requires ED25519 verification against only the protected guest known-hosts
+file. No first-use acceptance, `ssh-keyscan` trust or host-key update is used.
+A missing key, unknown/changed host key or unavailable guest must fail; do not
+weaken verification. The pinned file must contain the `192.168.40.130` entry
+whose fingerprint is `SHA256:8fAqS7Pezv1AqJXyYMxievFCxa/l3TQSzlhOT8fDsxg`.
+The Owner verifies this public fingerprint without reading private-key material.
+
+### Owner recreation gate
+
+Stop implementation after PR review. The current container lacks these mounts;
+real guest transport from it is not yet proven. After the task finishes, the
+Owner runs this in the Unraid web terminal, substituting the reviewed full head.
+The three persistent bind directories and existing GitHub credentials are reused.
+The small derived image copies only SSH configuration from this candidate.
+
+```bash
+(
+set -e
+B5_HEAD=REPLACE_WITH_REVIEWED_FULL_HEAD
+mkdir -p /mnt/user/appdata/aidumo-codex-source
+cd /mnt/user/appdata/aidumo-codex-source
+curl -fL "https://github.com/Innovestro/aidumo-development-infrastructure/archive/$B5_HEAD.tar.gz" -o "$B5_HEAD.tar.gz"
+tar -xzf "$B5_HEAD.tar.gz"
+cd "aidumo-development-infrastructure-$B5_HEAD/infrastructure/codex-unraid"
+# Presence/permissions only: never read or print the private key.
+for secret in linux_vm_key linux_vm_known_hosts; do
+  test -f "/mnt/user/appdata/aidumo-codex/secrets/$secret"
+  test -s "/mnt/user/appdata/aidumo-codex/secrets/$secret"
+  chown 1000:1000 "/mnt/user/appdata/aidumo-codex/secrets/$secret"
+  chmod 600 "/mnt/user/appdata/aidumo-codex/secrets/$secret"
+done
+# Check only the public pinned host entry; abort on missing/multiple/wrong keys.
+B5_PIN=$(ssh-keygen -F 192.168.40.130 -f /mnt/user/appdata/aidumo-codex/secrets/linux_vm_known_hosts | ssh-keygen -lf - -E sha256)
+test "$(printf '%s\n' "$B5_PIN" | awk '{print $2, $NF}')" = 'SHA256:8fAqS7Pezv1AqJXyYMxievFCxa/l3TQSzlhOT8fDsxg (ED25519)'
+B5_BASE=$(docker inspect aidumo-codex --format '{{.Image}}')
+docker tag "$B5_BASE" aidumo-codex:pre-5
+export B1_IMAGE="aidumo-codex:5-$B5_HEAD"
+docker build --pull=false --build-arg BASE=aidumo-codex:pre-5 -t "$B1_IMAGE" -f - . <<'DOCKERFILE'
+ARG BASE
+FROM ${BASE}
+COPY ssh.conf /etc/codex-ssh.conf
+DOCKERFILE
+# Failed drain stops here. Never force-remove a running task.
+./unraid.sh stop
+docker rm aidumo-codex
+./unraid.sh create
+./unraid.sh auth-status
+)
+```
+
+Leave it drained. Keep `B1_IMAGE=aidumo-codex:5-<reviewed-full-head>` for future
+recreation. No volume deletion, re-clone or reauthentication is required.
+Rollback uses `aidumo-codex:pre-5` and the integrated #10 `unraid.sh` at
+`5fd52760c0c5cb0030333f5fdab4d7246f360f44`, with the same persistent directories.
+
+After recreation, the Owner can verify read-only guest transport:
+
+```bash
+docker exec aidumo-codex ssh -F /etc/codex-ssh.conf aidumo@192.168.40.130 'hostname; id; uname -r'
+```
+
+Record the result and new container/image identity in the single #5 PR. This
+proves transport only; reset, contamination, resource measurements and the
+remaining #5 acceptance criteria are later work. Do not merge or close #5 at
+this stage. No Suite changes or GitHub Runner implementation are included.
