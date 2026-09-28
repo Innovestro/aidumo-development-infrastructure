@@ -16,3 +16,4 @@ sessions, logs, journals, databases, volumes and VM images stay in protected
 host-local storage outside the checkout, as described in [README.md](../README.md).
 
 - [shadow-coordinator/](shadow-coordinator/README.md): #3, bounded read-only Suite reconstruction.
+- [publisher/](publisher/README.md): #17, bounded B branch/PR publication and remote-outcome recovery.

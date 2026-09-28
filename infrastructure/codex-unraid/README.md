@@ -264,9 +264,13 @@ the storage budget and is never automatically deleted.
   data for diagnosis; no host Docker restart, volume pruning or NAS changes.
   Retain standing GitHub credentials and OpenAI/CODEX auth/session state for
   subsequent admitted work unless the Owner directs revocation.
-- Normal package completion: stop work at the package's review/integration gate.
-  A later package needs explicit admission; no per-package key/PAT recreation,
-  revocation or temporary branch ruleset is required.
+- Normal B package completion: follow current #1 same-agent review/integration
+  authority and continue admitted program work. Suite packages retain Suite
+  admission/review/integration gates. No per-package key/PAT recreation, revocation
+  or temporary branch ruleset is required.
+- For first publication of a new B source branch/PR, use the bounded
+  [publisher and recovery procedure](../publisher/README.md). It reconciles
+  remote identity on replay and blocks ambiguous outcomes without a second queue.
 
 ## Historical #10 Owner deployment gate — completed
 
