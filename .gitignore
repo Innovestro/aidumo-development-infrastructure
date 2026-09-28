@@ -26,3 +26,6 @@ volumes/
 *.vdi
 *.vhd
 *.vhdx
+
+# Local Python validation artifacts.
+__pycache__/
