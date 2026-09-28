@@ -1,15 +1,18 @@
 # Aidumo Development Infrastructure (B)
 
 This repository owns the executable development infrastructure for Aidumo.
-B0 and B1 are integrated. The current B1 follow-up is
-[#10: standing GitHub access](https://github.com/Innovestro/aidumo-development-infrastructure/issues/10).
-The [runtime and Owner runbook](infrastructure/codex-unraid/README.md) describe
-one persistent Unraid CODEX container and standing credentials for B and Suite.
-The Owner-chosen PAT is not repository-restricted; credential reach does not
-authorize work. Only explicitly admitted packages may be executed under their
-repository governance. The [Linux VM runbook](infrastructure/linux-vm/README.md)
-records #5's proven Owner-operated baseline reset; there is no coordinator or VM
-automation here.
+Current [program #1](https://github.com/Innovestro/aidumo-development-infrastructure/issues/1)
+authorizes autonomous B completion through Suite development-cutover readiness,
+including bounded technical follow-ups and B integration after distinct same-agent
+technical review and protected preflight. #2, #4, #5, #6 and #10 are integrated.
+Current work starts with [#14](https://github.com/Innovestro/aidumo-development-infrastructure/issues/14)
+failure diagnostics, then [#3](https://github.com/Innovestro/aidumo-development-infrastructure/issues/3)
+read-only Shadow Coordinator. Read live GitHub authority before execution.
+
+The [runtime runbook](infrastructure/codex-unraid/README.md) describes the
+persistent Unraid CODEX container. Credential reach does not authorize work;
+Suite governance and Owner-only host administration remain separate boundaries.
+The old Suite pipeline stays active until the applicable cutover gate is met.
 
 ## Authority and sources
 
@@ -99,8 +102,8 @@ git status --short --branch
 ```
 
 Read this file, [AGENTS.md](AGENTS.md), the assigned issue including comments, and
-its authoritative references before changing files. For the current B1 follow-up,
-read #10 and current #1 Owner decisions; use the [Unraid runbook](infrastructure/codex-unraid/README.md) for its build, checks
+its authoritative references before changing files. For current program work,
+read the assigned issue and current #1 Owner decisions; use the [Unraid runbook](infrastructure/codex-unraid/README.md) for its build, checks
 and Owner setup. B0 #2 needed no dependencies or runtime. B1 needs no Suite or
 External Tester checkout and introduces no CI workflow.
 
@@ -131,6 +134,6 @@ provider abstractions, compatibility/recovery/concurrency layers, extra security
 mechanisms, evidence systems/producers and review/qualification gates. A concrete
 current capability must need the mechanism **and** its authorized contract/budget
 must permit it. A possible future consumer or an AI-written proposal is not
-permission. Prefer the smallest sufficient change and stop when its contract is
-satisfied. B0 ends with the documented technical review described in
-[AGENTS.md](AGENTS.md); do not begin B1 in this lineage.
+permission. Prefer the smallest sufficient change. Complete each bounded contract, then
+continue the admitted #1 program under [AGENTS.md](AGENTS.md). B0 bootstrap-only
+limits are historical; they do not restrict subsequent admitted B packages.
