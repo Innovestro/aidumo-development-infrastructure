@@ -5,9 +5,9 @@ Current [program #1](https://github.com/Innovestro/aidumo-development-infrastruc
 authorizes autonomous B completion through Suite development-cutover readiness,
 including bounded technical follow-ups and B integration after distinct same-agent
 technical review and protected preflight. #2, #4, #5, #6 and #10 are integrated.
-Current work starts with [#14](https://github.com/Innovestro/aidumo-development-infrastructure/issues/14)
-failure diagnostics, then [#3](https://github.com/Innovestro/aidumo-development-infrastructure/issues/3)
-read-only Shadow Coordinator. Read live GitHub authority before execution.
+[#14](https://github.com/Innovestro/aidumo-development-infrastructure/issues/14)
+failure diagnostics is integrated/deployed. [#3](https://github.com/Innovestro/aidumo-development-infrastructure/issues/3)
+provides the [read-only Shadow Coordinator](infrastructure/shadow-coordinator/README.md). Read live GitHub authority before execution.
 
 The [runtime runbook](infrastructure/codex-unraid/README.md) describes the
 persistent Unraid CODEX container. Credential reach does not authorize work;

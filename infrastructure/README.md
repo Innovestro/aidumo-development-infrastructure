@@ -9,8 +9,10 @@ here only for an explicitly admitted capability.
   Owner-operated offline sparse raw-disk/NVRAM capture and reset procedure.
 
 - [freebsd-vm/](freebsd-vm/README.md): #6, measured bare FreeBSD baseline,
-  Hostpoint boundary and Owner-only host discovery; reset/toolchain proof pending.
+  Hostpoint boundary and proven local reset/toolchain profile.
 
 Suite contracts remain in A; tester implementation remains in C. Actual secrets,
 sessions, logs, journals, databases, volumes and VM images stay in protected
 host-local storage outside the checkout, as described in [README.md](../README.md).
+
+- [shadow-coordinator/](shadow-coordinator/README.md): #3, bounded read-only Suite reconstruction.
