@@ -176,7 +176,7 @@ done
 b6_options=$("$b6_pkg" rquery -U -e '%n = "php83"' '%Ok=%Ov')
 printf '%s\n' "$b6_options" | grep -qx 'CLI=on' || fail 'PHP CLI unavailable'
 printf '%s\n' "$b6_options" | grep -qx 'FPM=on' || fail 'PHP FPM unavailable'
-"$b6_pkg" install -n -U "$@"
+"$b6_pkg" install -n -y -U "$@"
 "$b6_pkg" install -F -y -U "$@"
 "$b6_pkg" install -y -U "$@"
 # Exact full inventory includes pkg and transitive dependencies.
@@ -189,6 +189,13 @@ printf '%s\n' "$b6_options" | grep -qx 'FPM=on' || fail 'PHP FPM unavailable'
 printf 'PACKAGE_STAGE_COMPLETE; services remain unconfigured by this block\n'
 B6_ROOT
 ```
+
+The dry-run deliberately includes `-y`: with pkg 2.7.5, `install -n -U`
+can print a valid transaction but return 1, stopping this `set -e` block before
+fetch. `-n -y -U` retains dry-run behavior and returns success for the resolved
+transaction. Do not suppress arbitrary nonzero exits. If a prior attempt stopped,
+inspect actual inventory and cached metadata before preparing a bounded resume;
+do not repeat bootstrap/update blindly.
 
 Do not change the block to skip missing packages. Retain sanitized candidate,
 transaction and version output. A package failure is not a runtime PASS.
