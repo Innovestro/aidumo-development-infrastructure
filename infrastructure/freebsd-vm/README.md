@@ -1,11 +1,16 @@
 # FreeBSD local prequalification substrate — #6
 
-This is the measured stage-2 baseline for [#6](https://github.com/Innovestro/aidumo-development-infrastructure/issues/6)
+This preserves the measured stage-2 baseline for [#6](https://github.com/Innovestro/aidumo-development-infrastructure/issues/6)
 and the existing [PR #13](https://github.com/Innovestro/aidumo-development-infrastructure/pull/13).
 It follows [current Owner decisions](https://github.com/Innovestro/aidumo-development-infrastructure/issues/1).
 Only dedicated [pinned guest SSH](../codex-unraid/README.md) is available to CODEX.
 Unraid discovery and lifecycle remain Owner-operated. No Hostpoint equivalence
 or full #6 acceptance is established. GitHub PR evidence remains canonical.
+
+Current work continues in [runtime preparation](runtime-preparation.md), including
+the completed bare reset proof, admin-ready baseline gate and one Owner package
+block. The discovery commands and pending statements below describe stage 2;
+current issue evidence supersedes them.
 
 ## Measurement and system
 
