@@ -438,7 +438,9 @@ no Suite changes or GitHub Runner implementation are included.
 consumes the real `aidumo-freebsd-hostpoint-01`, a DHCP client reserved at
 `192.168.40.150`. Owner-verified baseline: FreeBSD 15.1-RELEASE (kernel/running/
 userland), GENERIC amd64; user `aidumo`, UID/GID 1001:1001, groups `wheel` and
-`aidumo`. These are Owner observations, not yet container-to-guest proof.
+`aidumo`. The Owner proved container-to-guest transport on 2026-09-28; stage 2
+remeasured this baseline through the same transport. See the
+[FreeBSD characterization and Owner discovery runbook](../freebsd-vm/README.md).
 Guest wheel membership does not grant Unraid host authority.
 
 Inside the recreated CODEX container, use exactly:
@@ -457,10 +459,12 @@ fingerprint `SHA256:/Q0hmFgAh20TdZtaKXqopF6e7615rLiN5+t4htFI41Y`, independently
 verified by Owner against the authenticated guest host public key in #6.
 Existing B/Suite/Linux SSH entries and credentials remain unchanged.
 
-### Owner recreation gate — pending
+### Owner recreation procedure — transport proven
 
-Stop here until Owner recreates the existing persistent container after the
-active task finishes. Run the following in the Unraid Bash terminal, using the
+The [Owner transport evidence](https://github.com/Innovestro/aidumo-development-infrastructure/pull/13#issuecomment-5874345437)
+completes this gate at stage-1 head `ae6121af50fee5f35aaa717ee0a453ef6748e459`.
+No recreation is needed for stage-2 documentation. Retain the following procedure
+for a future authorized recreation after the active task finishes. Run it in the Unraid Bash terminal, using the
 reviewed full head from the canonical #6 PR. It reuses the existing image with
 only the candidate SSH configuration replaced, and all three existing persistent
 bind directories (workspace, CODEX auth/sessions, runtime state). No re-clone,
@@ -520,7 +524,8 @@ docker exec aidumo-codex ssh -F /etc/codex-ssh.conf aidumo@192.168.40.150 'hostn
 ```
 
 Record sanitized transport results and container/image identity in the canonical
-#6 PR. Container-to-FreeBSD SSH remains unproven until that gate is completed.
+#6 PR. Container-to-FreeBSD SSH is proven; VM lifecycle/reset and the
+PHP/web/DB baseline remain outstanding under the FreeBSD runbook.
 This stage installs no packages and performs no PHP/web/DB setup, VM lifecycle,
 reset, Suite/C changes or generalized provider orchestration. It adds no Unraid
 root credentials, Docker/libvirt socket/API, broad NAS mount or production/
