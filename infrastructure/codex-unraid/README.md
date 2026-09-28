@@ -366,11 +366,13 @@ weaken verification. The pinned file must contain the `192.168.40.130` entry
 whose fingerprint is `SHA256:8fAqS7Pezv1AqJXyYMxievFCxa/l3TQSzlhOT8fDsxg`.
 The Owner verifies this public fingerprint without reading private-key material.
 
-### Owner recreation gate
+### Historical Owner recreation gate — completed
 
-Stop implementation after PR review. The current container lacks these mounts;
-real guest transport from it is not yet proven. After the task finishes, the
-Owner runs this in the Unraid web terminal, substituting the reviewed full head.
+Owner recreation and real container-to-guest transport were recorded in PR #12
+on 2026-09-28. Do not recreate again for the documentation-only stage 2.
+Continue with the [Linux VM characterization/reset runbook](../linux-vm/README.md).
+The following retains the original recreation procedure for future Owner use,
+substituting the reviewed full head after the active task finishes.
 The three persistent bind directories and existing GitHub credentials are reused.
 The small derived image copies only SSH configuration from this candidate.
 
