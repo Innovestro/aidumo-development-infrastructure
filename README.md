@@ -1,8 +1,11 @@
 # Aidumo Development Infrastructure (B)
 
 This repository owns the executable development infrastructure for Aidumo.
-Its current scope is **B0: the minimal repository and authority bootstrap**.
-There is no coordinator, agent runtime, runner or VM implementation yet.
+B0 is integrated. Current work is **B1: one persistent CODEX Docker runtime
+on Unraid**, admitted by [#4](https://github.com/Innovestro/aidumo-development-infrastructure/issues/4).
+The [runtime and Owner runbook](infrastructure/codex-unraid/README.md) contain the
+configuration, boundaries and real pilot procedure. Implementation is not a
+claim that Unraid acceptance has passed. There is no coordinator or VM implementation.
 
 ## Authority and sources
 
@@ -39,7 +42,7 @@ separately authorized, linked A-side work. B0 requires no Suite change.
 | --- | --- |
 | `README.md` | Purpose, authority, placement, security boundary and local setup. |
 | [AGENTS.md](AGENTS.md) | Minimal CODEX/DEV contribution and review instructions. |
-| [infrastructure/](infrastructure/README.md) | Future executable B source and non-secret configuration, added only by a concrete authorized capability. Currently documentation only. |
+| [infrastructure/](infrastructure/README.md) | Future executable B source and non-secret configuration, added only by a concrete authorized capability. B1 CODEX runtime candidate under `infrastructure/codex-unraid/`. |
 | Outside the checkout, in protected host-local storage | Credentials, worker sessions/workspaces, runtime journals, caches, logs, databases, persistent volumes and VM disks/snapshots. Never committed. |
 
 Git may contain reviewed source, tests, reproducible definitions and non-secret
@@ -58,7 +61,8 @@ diff and never force-add them. Only sanitized examples may enter Git.
 
 ## Credential boundary for later capabilities
 
-These are constraints for separately authorized future work, not B0 components:
+These are constraints for admitted capabilities; they were not provisioned by B0.
+The [B1 runbook](infrastructure/codex-unraid/README.md) applies them to #4:
 
 - **Coordinator:** read-only access for shadow work. No Product/scope/profile
   decisions; no writes or dispatch without explicit authority for that operation.
@@ -91,10 +95,10 @@ git status --short --branch
 ```
 
 Read this file, [AGENTS.md](AGENTS.md), the assigned issue including comments, and
-its authoritative references before changing files. For B0 the assigned issue is
-#2. No dependency installation, `.env`, Docker, runner, VM, Suite checkout or
-External Tester checkout is needed. B0 has no build, application test suite,
-runtime entry point or CI workflow.
+its authoritative references before changing files. Current B1 work is #4; use
+the [Unraid runbook](infrastructure/codex-unraid/README.md) for its build, checks
+and Owner setup. B0 #2 needed no dependencies or runtime. B1 needs no Suite or
+External Tester checkout and introduces no CI workflow.
 
 Work on an issue branch, inspect the complete diff and run `git diff --check`
 (plus `git diff --cached --check` for staged changes). Confirm local Markdown
@@ -104,13 +108,18 @@ candidate to verify that it is self-contained. Record checks and their limits
 in the canonical PR; these checks establish bootstrap integrity, not runtime
 or Product qualification.
 
-## Deliberate B0 limit
+## B0 baseline and subsequent admission
 
-No shadow coordinator, agent dispatch, CODEX/Claude/Copilot adapters, Docker
-worker runtime, self-hosted runner, Linux/FreeBSD VM lifecycle, GitHub publisher,
+B0 implemented none of the following: shadow coordinator, agent dispatch,
+CODEX/Claude/Copilot adapters, Docker worker runtime, self-hosted runner,
+Linux/FreeBSD VM lifecycle, GitHub publisher,
 evidence reuse, scheduler/CODER replacement or production deployment automation.
 No Suite policy/workflow or External Tester changes. No generic agent platform,
 bootstrap generator, duplicate queue/state authority or speculative infrastructure.
+
+B1 #4 separately admits one CODEX container, its bounded Git/GitHub access,
+persistent state and actual restart/task proof. It does not admit the other
+mechanisms above. Use a separate lineage from B0.
 
 New mechanism classes default to **zero**: services/daemons, queues, repositories,
 workflow/control-plane families, persistent state authorities, generic frameworks,

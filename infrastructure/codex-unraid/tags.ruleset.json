@@ -1,0 +1,8 @@
+{
+  "name": "B1 pilot: no tag writes",
+  "target": "tag",
+  "enforcement": "active",
+  "bypass_actors": [],
+  "conditions": {"ref_name": {"include": ["~ALL"], "exclude": []}},
+  "rules": [{"type": "creation"}, {"type": "update"}, {"type": "deletion"}]
+}

@@ -1,0 +1,30 @@
+cli_auth_credentials_store = "file"
+# Docker supplies the isolation; no host capabilities or broad mounts are granted.
+sandbox_mode = "danger-full-access"
+approval_policy = "never"
+check_for_update_on_startup = false
+# Diagnostic logs are ephemeral and private. Ordinary logs contain metadata only.
+log_dir = "/tmp/codex-logs"
+
+[features]
+multi_agent = false
+multi_agent_v2 = false
+plugins = false
+remote_plugin = false
+apps = false
+
+[shell_environment_policy]
+inherit = "all"
+ignore_default_excludes = true
+
+[shell_environment_policy.filters]
+PATH = "include"
+HOME = "include"
+CODEX_HOME = "include"
+GH_TOKEN = "include"
+GH_CONFIG_DIR = "include"
+GH_PROMPT_DISABLED = "include"
+GIT_SSH_COMMAND = "include"
+GIT_TERMINAL_PROMPT = "include"
+LANG = "include"
+TERM = "include"
