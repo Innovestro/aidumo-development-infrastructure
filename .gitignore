@@ -1,0 +1,28 @@
+# Accidental secret files. Real credentials belong outside the checkout.
+.env
+.env.*
+.secrets/
+secrets/
+*.key
+*.pem
+
+# Accidental host state. These are guards, not runtime placement instructions.
+.local/
+.state/
+state/
+.runtime/
+runtime/
+sessions/
+workspaces/
+logs/
+*.log
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite3-*
+volumes/
+*.qcow2
+*.vmdk
+*.vdi
+*.vhd
+*.vhdx
