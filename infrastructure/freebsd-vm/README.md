@@ -1,16 +1,23 @@
 # FreeBSD local prequalification substrate — #6
 
-This preserves the measured stage-2 baseline for [#6](https://github.com/Innovestro/aidumo-development-infrastructure/issues/6)
-and the existing [PR #13](https://github.com/Innovestro/aidumo-development-infrastructure/pull/13).
-It follows [current Owner decisions](https://github.com/Innovestro/aidumo-development-infrastructure/issues/1).
-Only dedicated [pinned guest SSH](../codex-unraid/README.md) is available to CODEX.
-Unraid discovery and lifecycle remain Owner-operated. No Hostpoint equivalence
-or full #6 acceptance is established. GitHub PR evidence remains canonical.
+Current #6 implementation: [local runtime profile](runtime-profile.md), with
+reusable non-secret configuration and bounded fixtures in [profile/](profile/).
+[PR #13](https://github.com/Innovestro/aidumo-development-infrastructure/pull/13)
+and [#6](https://github.com/Innovestro/aidumo-development-infrastructure/issues/6)
+remain canonical for exact-head technical review and runtime evidence.
 
-Current work continues in [runtime preparation](runtime-preparation.md), including
-the completed bare reset proof, admin-ready baseline gate and one Owner package
-block. The discovery commands and pending statements below describe stage 2;
-current issue evidence supersedes them.
+CODEX has standing **key-only guest-root** authority in
+`aidumo-freebsd-hostpoint-01`, using the same strictly pinned SSH configuration.
+The root password remains Owner-only. CODEX performs guest package/service/restart
+work; Unraid/libvirt, host recovery and protected baseline handling remain
+Owner-operated. No other VM, host socket, NAS or provider authority is granted.
+
+The remainder of this file is the **historical stage-2 bare observation** and
+its then-pending discovery procedure. Its runtime-absence, privilege and pending
+reset statements are superseded by the current profile and issue evidence;
+do not execute historical discovery as a new required gate.
+The [package preparation](runtime-preparation.md) retains package rationale and
+the original bootstrap procedure for a fresh baseline.
 
 ## Measurement and system
 

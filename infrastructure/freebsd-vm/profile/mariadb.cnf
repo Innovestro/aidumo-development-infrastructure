@@ -1,0 +1,6 @@
+# Dedicated local fixture; consumes normal package defaults plus these overrides.
+[mysqld]
+bind-address = 127.0.0.1
+skip-name-resolve
+max_connections = 20
+local_infile = 0

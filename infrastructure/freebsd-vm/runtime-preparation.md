@@ -1,11 +1,21 @@
 # FreeBSD runtime preparation for #6
 
 Continue only `codex/6-freebsd-vm-substrate` / [PR #13](https://github.com/Innovestro/aidumo-development-infrastructure/pull/13).
-CODEX performs non-root work through the existing pinned SSH identity. Owner alone
-performs guest-root console and Unraid/libvirt actions. No root password, standing
-root, sudo/doas, Docker socket or libvirt access is needed by CODEX.
+CODEX now performs package installation and service work itself through strictly
+pinned key-only **root SSH inside this guest**, under the Owner clarification in
+#6. Root password and Unraid/libvirt authority remain Owner-only. See the
+[current installed profile](runtime-profile.md). The original preparation and
+bootstrap block below are historical; do not rerun them on the installed VM.
 
-## Current evidence and pre-install gate
+Owner subsequently attested verified `admin-ready-v1`; fresh root inspection
+confirmed pkg-only state, both retained catalogue hashes and the corrected
+resume SHA `45f9d7a841ee89910e6bdffa8a12f4cd6b4027e01b61a96939069cb38c5a3b30`.
+CODEX executed that script successfully, installing all 22 direct packages and
+33 resolver dependencies. The earlier missing-baseline/SSH/root-execution gates
+below are superseded. These historical commands are retained for explanation,
+not as a current request for Owner package work.
+
+## Historical preparation evidence and pre-install gate
 
 [Issue #6](https://github.com/Innovestro/aidumo-development-infrastructure/issues/6)
 records bare-v1 capture (7 s), start-to-pinned-SSH (21 s), persistent dirty state,
@@ -200,16 +210,16 @@ do not repeat bootstrap/update blindly.
 Do not change the block to skip missing packages. Retain sanitized candidate,
 transaction and version output. A package failure is not a runtime PASS.
 
-## CODEX resumes after installation
+## Original post-installation plan (now executed)
 
-Through pinned non-root SSH, inventory exact installed versions/modules/paths,
+Through pinned guest SSH, inventory exact installed versions/modules/paths,
 Composer version, FPM binary/config, Apache available modules and MariaDB binary
 versions. Inspect readable defaults and listeners before changing configuration.
 Then prepare only the minimal isolated fixture/configuration needed for Apache
 `.htaccess` and FPM requests, private writable paths, ordinary-user SQL/PDO, and
 local HTTPS with the exact certificate trusted. Prefer unprivileged fixture ports
-and user-owned state where feasible; return only genuinely required privileged
-changes to Owner. Do not deploy or modify Suite to establish a substrate profile.
+and user-owned state where feasible; perform required guest-root changes through
+root SSH. Do not deploy or modify Suite to establish a substrate profile.
 
 Measure CLI versus FPM limits separately (memory, execution/input time, upload/post
 size, FPM children/request timeout and Apache timeout/request limits), permissions,

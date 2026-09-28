@@ -524,8 +524,14 @@ docker exec aidumo-codex ssh -F /etc/codex-ssh.conf aidumo@192.168.40.150 'hostn
 ```
 
 Record sanitized transport results and container/image identity in the canonical
-#6 PR. Container-to-FreeBSD SSH is proven; VM lifecycle/reset and the
-PHP/web/DB baseline remain outstanding under the FreeBSD runbook.
+#6 PR. Container-to-FreeBSD SSH, bare reset and the local runtime profile are now
+proven; see [current FreeBSD profile](../freebsd-vm/runtime-profile.md).
+Owner subsequently authorized standing key-only root **inside this FreeBSD VM**.
+Use `ssh -F /etc/codex-ssh.conf root@192.168.40.150` for routine package, service,
+restart and diagnostic work; default `aidumo` access remains available. The same
+strict host pin applies to both identities. Root password stays Owner-only;
+Unraid/libvirt/recovery remains outside CODEX authority. The following exclusions
+describe the original transport-only stage.
 This stage installs no packages and performs no PHP/web/DB setup, VM lifecycle,
 reset, Suite/C changes or generalized provider orchestration. It adds no Unraid
 root credentials, Docker/libvirt socket/API, broad NAS mount or production/

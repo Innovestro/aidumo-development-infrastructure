@@ -1,0 +1,2 @@
+RewriteEngine On
+RewriteRule ^rewritten$ index.php [END]
