@@ -7,7 +7,9 @@ The [runtime and Owner runbook](infrastructure/codex-unraid/README.md) describe
 one persistent Unraid CODEX container and standing credentials for B and Suite.
 The Owner-chosen PAT is not repository-restricted; credential reach does not
 authorize work. Only explicitly admitted packages may be executed under their
-repository governance. There is no coordinator or VM implementation here.
+repository governance. The [Linux VM runbook](infrastructure/linux-vm/README.md)
+records #5's proven Owner-operated baseline reset; there is no coordinator or VM
+automation here.
 
 ## Authority and sources
 

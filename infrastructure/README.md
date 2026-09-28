@@ -5,6 +5,8 @@ here only for an explicitly admitted capability.
 
 - [codex-unraid/](codex-unraid/README.md): #4, one persistent CODEX executor and
   bounded Unraid pilot. See its Owner runbook and acceptance limits.
+- [linux-vm/](linux-vm/README.md): #5, measured Linux baseline and proven
+  Owner-operated offline sparse raw-disk/NVRAM capture and reset procedure.
 
 Suite contracts remain in A; tester implementation remains in C. Actual secrets,
 sessions, logs, journals, databases, volumes and VM images stay in protected
