@@ -41,6 +41,8 @@ A submitted task runs on Unraid even when the Owner laptop is off.
 | `secrets/gh_token` | `/run/secrets/gh_token` | read-only standing PR/issue token |
 | `secrets/linux_vm_key` | `/run/secrets/linux_vm_key` | read-only dedicated Linux guest key |
 | `secrets/linux_vm_known_hosts` | `/run/secrets/linux_vm_known_hosts` | read-only Owner-pinned Linux host key |
+| `secrets/freebsd_vm_key` | `/run/secrets/freebsd_vm_key` | read-only dedicated FreeBSD guest key |
+| `secrets/freebsd_vm_known_hosts` | `/run/secrets/freebsd_vm_known_hosts` | read-only Owner-pinned FreeBSD host key |
 
 No NAS root, Owner home, host SSH directory, Unraid flash or other appdata is
 mounted. Persistent data lives outside the configuration checkout. Do not share
@@ -107,7 +109,7 @@ The protected host secrets are already provisioned:
 
 Do not read, print or copy secret values into Git, prompts or logs. The Owner
 maintains files owned by UID/GID 1000 with mode 600 under the private secrets
-directory. `create` requires these three files plus the two Linux guest files
+directory. `create` requires these three files plus the two Linux and two FreeBSD guest files
 described below and mounts them individually
 read-only. Retain the existing credentials between normal admitted packages;
 rotate for expiry, compromise or an Owner-directed access change, not per task.
@@ -133,7 +135,7 @@ authorized. Contents-write API permission must remain absent; Owner checks the
 PAT permission page without publishing the token.
 
 For fresh setup after provisioning, run `./unraid.sh create`. For the existing
-container, use the recreation procedure below to retain workspace/auth/state.
+container, use the current #6 recreation procedure below to retain workspace/auth/state.
 
 ## Owner step 3 — supported CODEX authentication
 
@@ -268,7 +270,7 @@ the storage budget and is never automatically deleted.
 
 ## Historical #10 Owner deployment gate — completed
 
-For current recreation use the #5 procedure below. This section records the
+For current recreation use the #6 procedure below. This section records the
 previous deployment using #10 source, which did not require Linux guest files.
 
 The old running container lacks the Suite key mount and alias. Static checks
@@ -428,3 +430,110 @@ proves transport only. The completed Owner-operated dirty/reset/clean proof,
 resource measurements and reset procedure are in the
 [Linux VM runbook](../linux-vm/README.md). Integration remains Owner-only;
 no Suite changes or GitHub Runner implementation are included.
+
+
+## #6 first stage — bounded FreeBSD guest SSH
+
+[#6](https://github.com/Innovestro/aidumo-development-infrastructure/issues/6)
+consumes the real `aidumo-freebsd-hostpoint-01`, a DHCP client reserved at
+`192.168.40.150`. Owner-verified baseline: FreeBSD 15.1-RELEASE (kernel/running/
+userland), GENERIC amd64; user `aidumo`, UID/GID 1001:1001, groups `wheel` and
+`aidumo`. The Owner proved container-to-guest transport on 2026-09-28; stage 2
+remeasured this baseline through the same transport. See the
+[FreeBSD characterization and Owner discovery runbook](../freebsd-vm/README.md).
+Guest wheel membership does not grant Unraid host authority.
+
+Inside the recreated CODEX container, use exactly:
+
+```bash
+ssh -F /etc/codex-ssh.conf aidumo@192.168.40.150 'hostname; id; freebsd-version -kru; uname -m'
+```
+
+The alias `aidumo-freebsd-hostpoint-01` selects the same endpoint. Always supply
+`-F`; ordinary SSH does not consume `GIT_SSH_COMMAND`. This entry uses only
+`/run/secrets/freebsd_vm_key`, no agent/password fallback or forwarding, and
+strict ED25519 verification using only `/run/secrets/freebsd_vm_known_hosts`.
+Unknown/changed keys or missing credentials must fail; never accept first use
+or weaken verification. The protected pin must contain `192.168.40.150` with
+fingerprint `SHA256:/Q0hmFgAh20TdZtaKXqopF6e7615rLiN5+t4htFI41Y`, independently
+verified by Owner against the authenticated guest host public key in #6.
+Existing B/Suite/Linux SSH entries and credentials remain unchanged.
+
+### Owner recreation procedure — transport proven
+
+The [Owner transport evidence](https://github.com/Innovestro/aidumo-development-infrastructure/pull/13#issuecomment-5874345437)
+completes this gate at stage-1 head `ae6121af50fee5f35aaa717ee0a453ef6748e459`.
+No recreation is needed for stage-2 documentation. Retain the following procedure
+for a future authorized recreation after the active task finishes. Run it in the Unraid Bash terminal, using the
+reviewed full head from the canonical #6 PR. It reuses the existing image with
+only the candidate SSH configuration replaced, and all three existing persistent
+bind directories (workspace, CODEX auth/sessions, runtime state). No re-clone,
+volume deletion or reauthentication is needed. Host secret files must be readable
+by container UID 1000, independently of guest UID 1001.
+
+```bash
+(
+set -euo pipefail
+B6_HEAD=REPLACE_WITH_REVIEWED_FULL_HEAD
+export B1_ROOT=/mnt/user/appdata/aidumo-codex B1_CONTAINER=aidumo-codex
+mkdir -p /mnt/user/appdata/aidumo-codex-source
+cd /mnt/user/appdata/aidumo-codex-source
+curl -fL "https://github.com/Innovestro/aidumo-development-infrastructure/archive/$B6_HEAD.tar.gz" -o "$B6_HEAD.tar.gz"
+tar -xzf "$B6_HEAD.tar.gz"
+cd "aidumo-development-infrastructure-$B6_HEAD/infrastructure/codex-unraid"
+# Presence/permissions only; never print private-key material.
+for secret in freebsd_vm_key freebsd_vm_known_hosts; do
+  test -f "$B1_ROOT/secrets/$secret"
+  test -s "$B1_ROOT/secrets/$secret"
+  chown 1000:1000 "$B1_ROOT/secrets/$secret"
+  chmod 600 "$B1_ROOT/secrets/$secret"
+done
+# Require exactly the independently verified public ED25519 pin.
+B6_PIN=$(ssh-keygen -F 192.168.40.150 -f "$B1_ROOT/secrets/freebsd_vm_known_hosts" | ssh-keygen -lf - -E sha256)
+test "$(printf '%s\n' "$B6_PIN" | awk '{print $2, $NF}')" = 'SHA256:/Q0hmFgAh20TdZtaKXqopF6e7615rLiN5+t4htFI41Y (ED25519)'
+# Check existing credentials before stopping the container.
+for secret in git_key git_key_suite gh_token linux_vm_key linux_vm_known_hosts; do
+  test -f "$B1_ROOT/secrets/$secret"
+  test -s "$B1_ROOT/secrets/$secret"
+done
+B6_BASE=$(docker inspect aidumo-codex --format '{{.Image}}')
+docker tag "$B6_BASE" aidumo-codex:pre-6
+export B1_IMAGE="aidumo-codex:6-$B6_HEAD"
+docker build --pull=false --build-arg BASE=aidumo-codex:pre-6 -t "$B1_IMAGE" -f - . <<'DOCKERFILE'
+ARG BASE
+FROM ${BASE}
+COPY ssh.conf /etc/codex-ssh.conf
+DOCKERFILE
+# A failed drain aborts before removal. Never force-remove an active task.
+./unraid.sh stop
+docker rm aidumo-codex
+./unraid.sh create
+./unraid.sh auth-status
+)
+```
+
+Leave the container drained. Retain `B1_IMAGE=aidumo-codex:6-<reviewed-full-head>`
+for subsequent recreation. Rollback uses `aidumo-codex:pre-6` and the integrated
+`unraid.sh` at `610a706f82a3fa24d6e0a042b50e9cad122e2264`, with the same bind
+directories and the same drain/stop/remove/create sequence. Do not delete state.
+
+After recreation, the Owner can verify guest transport without installing anything:
+
+```bash
+docker exec aidumo-codex ssh -F /etc/codex-ssh.conf aidumo@192.168.40.150 'hostname; id; freebsd-version -kru; uname -m'
+```
+
+Record sanitized transport results and container/image identity in the canonical
+#6 PR. Container-to-FreeBSD SSH, bare reset and the local runtime profile are now
+proven; see [current FreeBSD profile](../freebsd-vm/runtime-profile.md).
+Owner subsequently authorized standing key-only root **inside this FreeBSD VM**.
+Use `ssh -F /etc/codex-ssh.conf root@192.168.40.150` for routine package, service,
+restart and diagnostic work; default `aidumo` access remains available. The same
+strict host pin applies to both identities. Root password stays Owner-only;
+Unraid/libvirt/recovery remains outside CODEX authority. The following exclusions
+describe the original transport-only stage.
+This stage installs no packages and performs no PHP/web/DB setup, VM lifecycle,
+reset, Suite/C changes or generalized provider orchestration. It adds no Unraid
+root credentials, Docker/libvirt socket/API, broad NAS mount or production/
+Hostpoint credentials. Local FreeBSD access does not establish Hostpoint
+equivalence or complete #6 acceptance. Do not merge or close #6 at this handoff.
