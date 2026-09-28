@@ -10,6 +10,8 @@ import signal
 import subprocess
 import sys
 import threading
+import tempfile
+import traceback
 import time
 
 STATE = Path('/state')
@@ -19,6 +21,9 @@ CODEX = Path('/codex')
 SECRETS = Path('/run/secrets')
 LOG_LOCK = threading.Lock()
 SESSION_ID = r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}'
+DIAGNOSTIC_LIMIT = 256 * 1024
+TRUNCATED = b"[truncated: retaining final diagnostic bytes]\n"
+
 LIMIT = 10 * 1024**3  # Admission ceiling; owner filesystem supplies the hard cap.
 
 
@@ -62,6 +67,40 @@ def safe_event(event):
         emit(kind)
 
 
+class FailureTail:
+    """Bound memory and disk independently of invocation output size."""
+    def __init__(self):
+        self.tail = bytearray()
+        self.truncated = False
+        self.lock = threading.Lock()
+
+    def append(self, data):
+        with self.lock:
+            self.tail.extend(data)
+            capacity = DIAGNOSTIC_LIMIT - len(TRUNCATED)
+            if len(self.tail) > capacity:
+                del self.tail[:-capacity]
+                self.truncated = True
+
+    def finish(self, rc):
+        target = STATE / 'last-failure.log'
+        if rc == 0:
+            target.unlink(missing_ok=True)
+            return
+        # mkstemp is 0600 even when execute is imported without main's umask.
+        fd, name = tempfile.mkstemp(prefix='.failure-', dir=STATE)
+        try:
+            with os.fdopen(fd, 'wb') as stream:
+                if self.truncated:
+                    stream.write(TRUNCATED)
+                stream.write(self.tail)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(name, target)
+        finally:
+            Path(name).unlink(missing_ok=True)
+
+
 def execute(prompt, resume=False):
     with (STATE / 'executor.lock').open('a') as lock:
         try:
@@ -97,10 +136,22 @@ def execute(prompt, resume=False):
         monitor = threading.Thread(target=measure, daemon=True)
         monitor.start()
         rc = 70
+        diagnostic = FailureTail()
         try:
             with prompt.open('rb') as source:
                 child = subprocess.Popen(args, cwd=REPO, env=env, stdin=source,
-                                         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            # Keep stderr out of the JSON parser so it cannot corrupt session
+            # events or masquerade as allowlisted metadata. Drain concurrently.
+            def capture_stderr():
+                with child.stderr:
+                    while True:
+                        chunk = child.stderr.read(65536)
+                        if not chunk:
+                            break
+                        diagnostic.append(chunk)
+            errors = threading.Thread(target=capture_stderr, daemon=True)
+            errors.start()
             def interrupt(signum, _frame):
                 child.send_signal(signum)
             signal.signal(signal.SIGTERM, interrupt)
@@ -108,11 +159,13 @@ def execute(prompt, resume=False):
             # Bound individual output lines; oversized content is discarded in chunks.
             while True:
                 line = child.stdout.readline(65537)
+                diagnostic.append(line)
                 if not line:
                     break
                 if len(line) > 65536:
                     while line and not line.endswith(b'\n'):
                         line = child.stdout.readline(65537)
+                        diagnostic.append(line)
                     continue
                 try:
                     event = json.loads(line)
@@ -120,10 +173,17 @@ def execute(prompt, resume=False):
                         safe_event(event)
                 except (ValueError, UnicodeDecodeError):
                     pass
+            child.stdout.close()
             rc = child.wait()
+            errors.join()
+        except Exception:
+            diagnostic.append(traceback.format_exc().encode())
+            raise
         finally:
             stopped.set()
             monitor.join()
+            diagnostic.append(('\n[executor exit %s]\n' % rc).encode())
+            diagnostic.finish(rc)
             emit('finished', exit_code=rc, storage_bytes=storage_bytes(), **sample())
             (STATE / 'exit-code').write_text(str(rc) + '\n')
         return rc

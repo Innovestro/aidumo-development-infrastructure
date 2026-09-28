@@ -537,3 +537,81 @@ reset, Suite/C changes or generalized provider orchestration. It adds no Unraid
 root credentials, Docker/libvirt socket/API, broad NAS mount or production/
 Hostpoint credentials. Local FreeBSD access does not establish Hostpoint
 equivalence or complete #6 acceptance. Do not merge or close #6 at this handoff.
+
+## #14 protected last-failure diagnostics
+
+The runtime retains only the newest failed invocation's final 256 KiB (including
+an explicit truncation marker and exit status) in `/state/last-failure.log`, mode
+0600. stdout and stderr feed one bounded diagnostic tail; stderr never enters the JSON
+event parser, preserving session/metadata semantics; ordinary `runtime.jsonl`
+still receives only allowlisted metadata. A successful invocation deletes the
+stale artifact. An admitted recovery task may explicitly read it; it may contain
+sensitive model/tool/error text and must never be automatically posted to GitHub.
+`unraid.sh logs` does not read it. Capture is bounded in memory during execution,
+then atomically replaced on process completion or a caught invocation exception.
+A container kill/power loss before finalization may leave the prior failure;
+this is last *completed* failure evidence, not crash-complete tracing. Earlier
+content beyond the retained tail is intentionally unavailable.
+
+Local checks (use executable storage when `/tmp` is noexec):
+
+```bash
+TEST_TMPDIR=/workspace python3 -m unittest discover -s infrastructure/codex-unraid/tests -v
+```
+
+### Owner deployment boundary
+
+The executor cannot replace `/usr/local/bin/runtime` on its read-only root
+filesystem or control host Docker. After the active task ends, run this bounded
+update in the Unraid terminal using the exact reviewed full head from the #14
+canonical PR. It preserves the existing image packages, mounts and private state.
+No host credentials/socket should be added to the executor to bypass this gate.
+
+```bash
+(
+set -euo pipefail
+B14_HEAD=REPLACE_WITH_REVIEWED_FULL_HEAD
+export B1_ROOT=/mnt/user/appdata/aidumo-codex B1_CONTAINER=aidumo-codex
+mkdir -p /mnt/user/appdata/aidumo-codex-source
+cd /mnt/user/appdata/aidumo-codex-source
+curl -fL "https://github.com/Innovestro/aidumo-development-infrastructure/archive/$B14_HEAD.tar.gz" -o "$B14_HEAD.tar.gz"
+tar -xzf "$B14_HEAD.tar.gz"
+cd "aidumo-development-infrastructure-$B14_HEAD/infrastructure/codex-unraid"
+B14_BASE=$(docker inspect aidumo-codex --format '{{.Image}}')
+docker tag "$B14_BASE" aidumo-codex:pre-14
+export B1_IMAGE="aidumo-codex:14-$B14_HEAD"
+docker build --pull=false --build-arg BASE=aidumo-codex:pre-14 -t "$B1_IMAGE" -f - . <<'DOCKERFILE'
+ARG BASE
+FROM ${BASE}
+COPY --chmod=755 runtime.py /usr/local/bin/runtime
+DOCKERFILE
+./unraid.sh stop
+docker rm aidumo-codex
+./unraid.sh create
+./unraid.sh auth-status
+# Compare installed bytes, not just the checkout.
+sha256sum runtime.py
+docker exec aidumo-codex sha256sum /usr/local/bin/runtime
+# Run the candidate tests against the installed executable, in isolated temp state.
+docker exec aidumo-codex mkdir -p /workspace/b14-deployment-check/tests
+docker cp tests/test_runtime.py aidumo-codex:/workspace/b14-deployment-check/tests/test_runtime.py
+docker cp unraid.sh aidumo-codex:/workspace/b14-deployment-check/unraid.sh
+docker exec -e TEST_TMPDIR=/workspace -e RUNTIME_UNDER_TEST=/usr/local/bin/runtime \
+  aidumo-codex python3 -m unittest discover -s /workspace/b14-deployment-check/tests -v
+docker inspect aidumo-codex --format 'ID={{.Id}} Image={{.Image}} Started={{.State.StartedAt}}'
+./unraid.sh logs
+)
+```
+
+Record matching hashes, ten passing installed-runtime tests and container/image
+identity in the canonical PR. Leave drained until explicit program continuation.
+The tests use simulated subprocess failures and isolated state: no model request,
+no replacement of real diagnostics/session/prompt and no Suite mutation.
+Rollback uses `aidumo-codex:pre-14`, the same mounts and drain/stop/remove/create
+sequence; never delete volumes or reset host Docker. Keep the selected image tag
+for future recreation. Deployment acceptance remains open until this installed
+runtime verification succeeds.
+
+For current #1 work, historical package handoff/Owner integration statements in
+this runbook do not override autonomous B integration and continuation. Host
+Docker deployment and recovery remain Owner operations.
