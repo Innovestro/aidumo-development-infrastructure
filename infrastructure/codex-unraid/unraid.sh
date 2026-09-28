@@ -14,6 +14,7 @@ case ${1:-help} in
       test -d "$root/$part" || { echo "Missing $root/$part; follow README setup." >&2; exit 1; }
     done
     test -s "$root/secrets/git_key"
+    test -s "$root/secrets/git_key_suite"
     test -s "$root/secrets/gh_token"
     docker run --pull never -d --name "$name" --hostname aidumo-codex --init \
       --restart unless-stopped --platform linux/amd64 --user 1000:1000 \
@@ -26,6 +27,7 @@ case ${1:-help} in
       --mount "type=bind,src=$root/codex,dst=/codex" \
       --mount "type=bind,src=$root/state,dst=/state" \
       --mount "type=bind,src=$root/secrets/git_key,dst=/run/secrets/git_key,readonly" \
+      --mount "type=bind,src=$root/secrets/git_key_suite,dst=/run/secrets/git_key_suite,readonly" \
       --mount "type=bind,src=$root/secrets/gh_token,dst=/run/secrets/gh_token,readonly" \
       "$image"
     ;;
