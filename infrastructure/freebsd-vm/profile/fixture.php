@@ -40,5 +40,8 @@ try { $pdo->query('SELECT User FROM mysql.user'); throw new RuntimeException('un
 catch (PDOException $e) { check($e->getCode() === '42000', 'db_global_access_denied'); }
 // Retained across service/guest restart; subsequent runs verify rather than overwrite.
 $marker = "$dir/persistence";
-if (!file_exists($marker)) { check(file_put_contents($marker, 'b6-persistent-v1') === 16, 'create_persistence'); }
-check(file_get_contents($marker) === 'b6-persistent-v1', 'filesystem_persistence');
+if (($argv[1] ?? null) === '--initialize-marker') {
+    check(!file_exists($marker), 'marker_initially_absent');
+    check(file_put_contents($marker, 'b6-persistent-v1') === 16, 'create_persistence');
+}
+check(is_file($marker) && file_get_contents($marker) === 'b6-persistent-v1', 'filesystem_persistence');

@@ -53,6 +53,6 @@ CREATE TABLE b6_persistence.marker (id INT PRIMARY KEY, value VARCHAR(32));
 INSERT INTO b6_persistence.marker VALUES (1, 'b6-persistent-v1');
 GRANT SELECT ON b6_persistence.* TO 'b6web'@'localhost';
 SQL
-su -m b6web -c '/usr/local/bin/php /usr/local/etc/aidumo-b6/fixture.php'
+su -m b6web -c '/usr/local/bin/php /usr/local/etc/aidumo-b6/fixture.php --initialize-marker'
 curl --fail --silent --show-error http://127.0.0.1:18080/rewritten
 curl --fail --silent --show-error --cacert /usr/local/etc/aidumo-b6/tls/cert.pem https://localhost:18443/rewritten
