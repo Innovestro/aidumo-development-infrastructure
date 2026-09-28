@@ -18,6 +18,8 @@ case ${1:-help} in
     test -s "$root/secrets/gh_token"
     test -s "$root/secrets/linux_vm_key"
     test -s "$root/secrets/linux_vm_known_hosts"
+    test -s "$root/secrets/freebsd_vm_key"
+    test -s "$root/secrets/freebsd_vm_known_hosts"
     docker run --pull never -d --name "$name" --hostname aidumo-codex --init \
       --restart unless-stopped --platform linux/amd64 --user 1000:1000 \
       --cpus 2 --memory 4g --memory-swap 4g --pids-limit 256 \
@@ -33,6 +35,8 @@ case ${1:-help} in
       --mount "type=bind,src=$root/secrets/gh_token,dst=/run/secrets/gh_token,readonly" \
       --mount "type=bind,src=$root/secrets/linux_vm_key,dst=/run/secrets/linux_vm_key,readonly" \
       --mount "type=bind,src=$root/secrets/linux_vm_known_hosts,dst=/run/secrets/linux_vm_known_hosts,readonly" \
+      --mount "type=bind,src=$root/secrets/freebsd_vm_key,dst=/run/secrets/freebsd_vm_key,readonly" \
+      --mount "type=bind,src=$root/secrets/freebsd_vm_known_hosts,dst=/run/secrets/freebsd_vm_known_hosts,readonly" \
       "$image"
     ;;
   start) docker start "$name" ;;
