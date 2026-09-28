@@ -1,11 +1,13 @@
 # Aidumo Development Infrastructure (B)
 
 This repository owns the executable development infrastructure for Aidumo.
-B0 is integrated. Current work is **B1: one persistent CODEX Docker runtime
-on Unraid**, admitted by [#4](https://github.com/Innovestro/aidumo-development-infrastructure/issues/4).
-The [runtime and Owner runbook](infrastructure/codex-unraid/README.md) contain the
-configuration, boundaries and real pilot procedure. Implementation is not a
-claim that Unraid acceptance has passed. There is no coordinator or VM implementation.
+B0 and B1 are integrated. The current B1 follow-up is
+[#10: standing GitHub access](https://github.com/Innovestro/aidumo-development-infrastructure/issues/10).
+The [runtime and Owner runbook](infrastructure/codex-unraid/README.md) describe
+one persistent Unraid CODEX container and standing credentials for B and Suite.
+The Owner-chosen PAT is not repository-restricted; credential reach does not
+authorize work. Only explicitly admitted packages may be executed under their
+repository governance. There is no coordinator or VM implementation here.
 
 ## Authority and sources
 
@@ -95,8 +97,8 @@ git status --short --branch
 ```
 
 Read this file, [AGENTS.md](AGENTS.md), the assigned issue including comments, and
-its authoritative references before changing files. Current B1 work is #4; use
-the [Unraid runbook](infrastructure/codex-unraid/README.md) for its build, checks
+its authoritative references before changing files. For the current B1 follow-up,
+read #10 and current #1 Owner decisions; use the [Unraid runbook](infrastructure/codex-unraid/README.md) for its build, checks
 and Owner setup. B0 #2 needed no dependencies or runtime. B1 needs no Suite or
 External Tester checkout and introduces no CI workflow.
 

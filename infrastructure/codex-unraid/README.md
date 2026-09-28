@@ -1,11 +1,12 @@
 # One CODEX executor on Unraid — #4
 
-This is the B1 runtime candidate for [#4](https://github.com/Innovestro/aidumo-development-infrastructure/issues/4),
-not an acceptance claim. One linux/amd64 container, manually admitted tasks,
-no dispatch/queue/other agents. Unraid is `192.168.40.10`; the Linux/FreeBSD VMs
-are qualification targets and are not used here. No Suite or External Tester
-changes. Bootstrap can happen on a laptop; a submitted task runs on Unraid even
-when that laptop is off. Acceptance still requires the real pilot below.
+B1 [#4](https://github.com/Innovestro/aidumo-development-infrastructure/issues/4)
+is integrated at `733197b8619a1b5d731131383ac0eade70e3c566`. This runbook adopts
+standing GitHub access under [#10](https://github.com/Innovestro/aidumo-development-infrastructure/issues/10)
+and the current Owner decisions in [#1](https://github.com/Innovestro/aidumo-development-infrastructure/issues/1).
+One linux/amd64 container executes manually admitted tasks; no dispatch, queue
+or other agents. Unraid is `192.168.40.10`; neither qualification VM is used.
+A submitted task runs on Unraid even when the Owner laptop is off.
 
 ## Layout and limits
 
@@ -30,11 +31,12 @@ when that laptop is off. Acceptance still requires the real pilot below.
 
 | Host path under `/mnt/user/appdata/aidumo-codex` | Container | Access |
 | --- | --- | --- |
-| `workspace/` | `/workspace` | rw; only this B checkout and task files |
+| `workspace/` | `/workspace` | rw; explicitly admitted checkouts and task files |
 | `codex/` | `/codex` (`CODEX_HOME`) | rw; auth/config/session state, private |
 | `state/` | `/state` | rw; lock, drain marker, prompt, session ID, exit code, metadata |
-| `secrets/git_key` | `/run/secrets/git_key` | read-only dedicated Git key |
-| `secrets/gh_token` | `/run/secrets/gh_token` | read-only dedicated PR token |
+| `secrets/git_key` | `/run/secrets/git_key` | read-only standing B deploy key |
+| `secrets/git_key_suite` | `/run/secrets/git_key_suite` | read-only standing Suite deploy key |
+| `secrets/gh_token` | `/run/secrets/gh_token` | read-only standing PR/issue token |
 
 No NAS root, Owner home, host SSH directory, Unraid flash or other appdata is
 mounted. Persistent data lives outside the configuration checkout. Do not share
@@ -76,57 +78,57 @@ on Unraid. Do not stop/restart Docker itself or unrelated containers.
 
 Use a fresh dedicated directory. Do not recursively chown existing appdata.
 `B1_ROOT` can select an equivalent private path on an existing pool;
-`B1_CONTAINER`/`B1_IMAGE` are available for local smoke checks only. The pilot
-uses the defaults. Do not run a second production executor.
+`B1_CONTAINER` selects the container name for local smoke checks; production
+uses the default. `B1_IMAGE` selects a reviewed image for build/create. Do not run a second production executor.
 
-## Owner step 2 — bound GitHub access before granting write credentials
+## Owner step 2 — standing GitHub access
 
-A token with Contents:write also authorizes GitHub merge/release endpoints;
-there is no separate PAT "push but never release" checkbox. Do **not** put an
-Owner/classic/Contents-write token in this runtime.
+The intended standing work set is `Innovestro/aidumo-development-infrastructure`
+and `Innovestro/aidumo-suite`. The installed fine-grained PAT is intentionally
+**not repository-restricted** by Owner decision. Credential reach is not work
+authorization: every task still requires explicit repository/package admission
+and compliance with that repository's governance. In Suite this includes claims,
+role routing, Product/DEV/PM review, branch protections, required checks and
+Owner-only integration. Additional repository work requires explicit authority.
 
-Use two narrowly scoped credentials:
+The protected host secrets are already provisioned:
 
-1. A fresh repository-only SSH deploy key for Git transport. It has no REST API
-   bearer-token capability. Its default Git write scope is too broad, so first
-   import `branches.ruleset.json` and `tags.ruleset.json` in this repository's
-   **Settings → Rules → Rulesets → Import a ruleset**. Both must be **Active**,
-   with **no bypass actors**, including no deploy-key or admin bypass. They
-   block creation/update/deletion of all branches except
-   `codex/b1-container-proof`, and all tags. This also blocks the Owner and
-   bootstrap branch until the pilot ends; it is an explicit temporary Owner
-   setup action, not an autonomous settings change. Keep other protections.
-2. A fine-grained PAT for **only** this repository, **Pull requests: read/write**,
-   **Contents: read-only**, **Issues: read-only** (contract/comments), implicit
-   Metadata:read, no other permissions, short
-   expiry (e.g. seven days). It cannot perform the Contents-write merge/release
-   API operations. The token's identity still needs access to this repository;
-   organization approval may be required. It is used only by gh/API calls.
+- `secrets/git_key`: standing write deploy key for this B repository; normal
+  `github.com` Git identity.
+- `secrets/git_key_suite`: separate standing write deploy key for Suite; selected
+  only through `github-suite`, which connects to `github.com` with that key.
+- `secrets/gh_token`: standing fine-grained PAT with Pull requests and Issues
+  **read/write**, Contents and Metadata **read-only**, no other permissions.
+  No admin/settings/secrets/releases/packages/Actions authority is granted.
 
-In the Unraid terminal, generate the Git key (no passphrase for this dedicated,
-protected, noninteractive key):
+Do not read, print or copy secret values into Git, prompts or logs. The Owner
+maintains files owned by UID/GID 1000 with mode 600 under the private secrets
+directory. `create` requires all three files and mounts them individually
+read-only. Retain the existing credentials between normal admitted packages;
+rotate for expiry, compromise or an Owner-directed access change, not per task.
+No new rulesets or changes to existing protections are required by #10. The
+retired `branches.ruleset.json` and `tags.ruleset.json` are historical B1 pilot
+artifacts, not standing setup instructions; do not import them.
 
-```bash
-ssh-keygen -t ed25519 -N '' -C aidumo-codex-b1 -f /mnt/user/appdata/aidumo-codex/secrets/git_key
-cat /mnt/user/appdata/aidumo-codex/secrets/git_key.pub
+SSH remotes must select the matching repository key:
+
+```text
+git@github.com:Innovestro/aidumo-development-infrastructure.git
+git@github-suite:Innovestro/aidumo-suite.git
 ```
 
-Register **only the public key** in this repository's Settings → Deploy keys,
-with write access. Never add it to the bypass list. Enter the fine-grained PAT
-without shell history or echo:
+For an already admitted Suite checkout, set its origin to the second URL before
+Git operations. #10 does not authorize Suite edits or a Suite proof branch.
+Both hosts use only their configured key, disable the SSH agent and verify the
+same pinned GitHub host key. Never disable host verification. The PAT is used
+by gh/API calls, never as the Git push identity. Git write capability is not a
+technical branch allowlist: task scope and existing repository protections
+still apply. No merge, release, settings mutation or automatic integration is
+authorized. Contents-write API permission must remain absent; Owner checks the
+PAT permission page without publishing the token.
 
-```bash
-read -rsp 'B1 PR-only token: ' b1_token; echo
-(umask 077; printf '%s' "$b1_token" > /mnt/user/appdata/aidumo-codex/secrets/gh_token)
-unset b1_token
-chown 1000:1000 /mnt/user/appdata/aidumo-codex/secrets/git_key /mnt/user/appdata/aidumo-codex/secrets/gh_token
-chmod 600 /mnt/user/appdata/aidumo-codex/secrets/git_key /mnt/user/appdata/aidumo-codex/secrets/gh_token
-./unraid.sh create
-```
-
-The public host key is pinned from GitHub's HTTPS `/meta` endpoint. Never disable
-SSH host verification; investigate a mismatch against GitHub's official keys.
-No app/private-key issuer, proxy or custom authentication service is introduced.
+For fresh setup after provisioning, run `./unraid.sh create`. For the existing
+container, use the recreation procedure below to retain workspace/auth/state.
 
 ## Owner step 3 — supported CODEX authentication
 
@@ -166,14 +168,17 @@ git --version
 gh --version
 ```
 
-Exit the container shell. Before the first task the Owner must verify both
-active rulesets in GitHub, zero bypass actors, exact branch exclusion, and the
-PAT permission page. Record sanitized settings/credential type/expiry evidence
-in the canonical #4 PR; never token/key values. Existing repository settings
-were unprotected at bootstrap inspection, so this is a real prerequisite.
-Ruleset imports are **not** part of `create` and must not be skipped.
+Exit the container shell. The Owner verifies credential type, repository key
+mapping and PAT functional permissions in GitHub. Record only sanitized evidence
+in the canonical PR. Normal packages need admission, not credential recreation.
+The runtime initially starts in the B checkout; a Suite task must explicitly
+select its admitted checkout and read Suite governance before working there.
 
-## Real pilot and restart proof
+## Historical B1 pilot and restart proof
+
+B1 is complete; PR #8 is integrated and proof PR #9 is closed unmerged. The
+following procedure and supplied prompts document that original proof. Do not
+rerun them for #10 or restore the retired pilot credentials/rulesets.
 
 The two supplied prompts are the deliberately small admitted B documentation
 task required by #4; they do not authorize other work. The bootstrap PR and
@@ -245,21 +250,81 @@ the storage budget and is never automatically deleted.
   the executor lock. GitHub tools in this shell do not automatically receive
   the PR token; the task invocation injects it.
 - Recreation: drain/stop, save the qualified image ID, remove only the stopped
-  container, then `create` using the same five mounts and image. Never use a
+  container, then `create` using the same six mounts and image. Never use a
   volume-delete command. Reauthenticate only if auth actually expired/revoked.
 - Rollback on Unraid: `./unraid.sh stop`, then
   `docker rm aidumo-codex` removes only this stopped container. Retain its private
   data for diagnosis; no host Docker restart, volume pruning or NAS changes.
-  Revoke this pilot's deploy key/PAT (and OpenAI key if abandoning the pilot).
-- End pilot: drain/stop, revoke the deploy key and PAT, then Owner can remove or
-  revise the temporary rulesets to integrate reviewed PRs. For normal later
-  work, explicitly admit a new B package/branch and adjust the existing branch
-  exclusion before restoring bounded credentials. This is manual admission,
-  not an automatically discovered work queue.
+  Retain standing GitHub credentials and OpenAI/CODEX auth/session state for
+  subsequent admitted work unless the Owner directs revocation.
+- Normal package completion: stop work at the package's review/integration gate.
+  A later package needs explicit admission; no per-package key/PAT recreation,
+  revocation or temporary branch ruleset is required.
 
-Remaining gates: Owner host/credential setup, real Unraid acceptance run and
-applicable DEV/Owner review. Local smoke tests are not Unraid or model evidence;
-the B0 same-agent review exception does not waive B1 review.
+## #10 Owner deployment gate — existing container
+
+The old running container lacks the Suite key mount and alias. Static checks
+and B branch/API proof cannot establish real Suite Git transport. After the
+candidate PR is self-checked and reviewed, the Owner runs the following in the
+Unraid web terminal, after this task has finished. Use the exact full head from
+the PR handoff. This changes only this container, retaining all persistent data.
+
+```bash
+(
+set -e
+B10_HEAD=REPLACE_WITH_REVIEWED_FULL_HEAD
+mkdir -p /mnt/user/appdata/aidumo-codex-source
+cd /mnt/user/appdata/aidumo-codex-source
+curl -fL "https://github.com/Innovestro/aidumo-development-infrastructure/archive/$B10_HEAD.tar.gz" -o "$B10_HEAD.tar.gz"
+tar -xzf "$B10_HEAD.tar.gz"
+cd "aidumo-development-infrastructure-$B10_HEAD/infrastructure/codex-unraid"
+# Check presence/permissions without reading secrets.
+for secret in git_key git_key_suite gh_token; do
+  test -s "/mnt/user/appdata/aidumo-codex/secrets/$secret" || exit 1
+  chown 1000:1000 "/mnt/user/appdata/aidumo-codex/secrets/$secret"
+  chmod 600 "/mnt/user/appdata/aidumo-codex/secrets/$secret"
+done
+# Reuse the installed image; only ssh.conf changes inside the image for #10.
+B10_BASE=$(docker inspect aidumo-codex --format '{{.Image}}')
+docker tag "$B10_BASE" aidumo-codex:pre-10
+export B1_IMAGE="aidumo-codex:10-$B10_HEAD"
+docker build --pull=false --build-arg BASE=aidumo-codex:pre-10 -t "$B1_IMAGE" -f - . <<'DOCKERFILE'
+ARG BASE
+FROM ${BASE}
+COPY ssh.conf /etc/codex-ssh.conf
+DOCKERFILE
+# A failed drain must stop this sequence; never force-remove a running task.
+./unraid.sh stop
+docker rm aidumo-codex
+./unraid.sh create
+./unraid.sh auth-status
+)
+```
+
+Keep the candidate image tag for future recreation (`B1_IMAGE` must select it).
+The derived image avoids reinstalling packages on the production NAS; the normal
+Dockerfile also includes the new SSH config on future full builds. The old image
+is retained as `aidumo-codex:pre-10` for rollback using the old source/create
+script and existing persistent data.
+
+Leave the recreated runtime drained. Owner can then perform read-only transport
+proof from that container (no Suite checkout or write is needed):
+
+```bash
+docker exec aidumo-codex git ls-remote git@github.com:Innovestro/aidumo-development-infrastructure.git HEAD
+docker exec aidumo-codex git ls-remote git@github-suite:Innovestro/aidumo-suite.git HEAD
+```
+
+Record both results and the new image/container identity in the #10 canonical
+PR; a successful read establishes transport, not Suite branch write permission
+or authority to work. Owner verification of installed PAT permissions remains
+necessary; API success alone cannot prove absence of Contents-write. No merge
+or issue closure is part of this deployment proof.
+
+For B, CODEX performs implementation/self-check and a distinct **same-agent
+technical review** against the exact candidate and evidence. Aidumo DEV does not
+work in this repository; this is never an independent DEV PASS. Following the
+remaining deployment/transport proof and review, integration belongs to Owner.
 
 Sources: [OpenAI authentication](https://learn.chatgpt.com/docs/auth),
 [noninteractive execution/resume](https://learn.chatgpt.com/docs/non-interactive-mode),
