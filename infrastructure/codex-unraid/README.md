@@ -5,8 +5,9 @@ is integrated at `733197b8619a1b5d731131383ac0eade70e3c566`. This runbook adopts
 standing GitHub access under [#10](https://github.com/Innovestro/aidumo-development-infrastructure/issues/10)
 and the current Owner decisions in [#1](https://github.com/Innovestro/aidumo-development-infrastructure/issues/1).
 One linux/amd64 container executes manually admitted tasks; no dispatch, queue
-or other agents. Unraid is `192.168.40.10`. The first #5 stage adds only
-bounded Linux guest SSH; qualification and VM lifecycle remain unimplemented.
+or other agents. Unraid is `192.168.40.10`. The #5 access implementation adds only
+bounded Linux guest SSH; Owner-operated VM reset is documented in the
+[Linux VM runbook](../linux-vm/README.md). Suite qualification remains unbound.
 A submitted task runs on Unraid even when the Owner laptop is off.
 
 ## Layout and limits
@@ -369,7 +370,7 @@ The Owner verifies this public fingerprint without reading private-key material.
 ### Historical Owner recreation gate — completed
 
 Owner recreation and real container-to-guest transport were recorded in PR #12
-on 2026-09-28. Do not recreate again for the documentation-only stage 2.
+on 2026-09-28. No further container recreation is required for the final documentation update.
 Continue with the [Linux VM characterization/reset runbook](../linux-vm/README.md).
 The following retains the original recreation procedure for future Owner use,
 substituting the reviewed full head after the active task finishes.
@@ -423,6 +424,7 @@ docker exec aidumo-codex ssh -F /etc/codex-ssh.conf aidumo@192.168.40.130 'hostn
 ```
 
 Record the result and new container/image identity in the single #5 PR. This
-proves transport only; reset, contamination, resource measurements and the
-remaining #5 acceptance criteria are later work. Do not merge or close #5 at
-this stage. No Suite changes or GitHub Runner implementation are included.
+proves transport only. The completed Owner-operated dirty/reset/clean proof,
+resource measurements and reset procedure are in the
+[Linux VM runbook](../linux-vm/README.md). Integration remains Owner-only;
+no Suite changes or GitHub Runner implementation are included.
