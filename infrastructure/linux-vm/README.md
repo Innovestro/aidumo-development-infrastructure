@@ -5,7 +5,11 @@ This runbook consumes the existing VM under [#5](https://github.com/Innovestro/a
 and the single [PR #12](https://github.com/Innovestro/aidumo-development-infrastructure/pull/12).
 CODEX uses only [dedicated pinned guest SSH](../codex-unraid/README.md).
 Host lifecycle/storage actions belong to Owner. No Suite change, runner install,
-package install, sudoers change or added CODEX host authority is needed.
+package install, sudoers change or added CODEX host authority was needed for #5.
+
+The later [#19 native qualification profile](qualification/README.md) adds the
+Suite-derived toolchain and standing guest administration under its own authority.
+The measurements below remain the historical bare #5 baseline.
 PR evidence is canonical; this is an operating runbook, not a readiness ledger.
 
 ## Measured guest baseline
