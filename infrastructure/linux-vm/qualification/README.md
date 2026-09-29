@@ -42,9 +42,17 @@ in the dev lockfile alone is not a Docker requirement.
    This is a bounded bootstrap, not a package reconciler or drift repair service.
 3. Transfer and run [database.sh](database.sh). It initializes only the dedicated
    `/var/lib/aidumo-b19-mariadb` directory and preserves an existing database.
+   `.b19-initialized` is written only after successful initialization. Nonempty
+   data without that marker is rejected: inspect logs/processes first, then retain
+   the interrupted directory separately before explicitly provisioning fresh data.
+   Merely finding a `mysql/` directory does not prove initialization completed.
    Its enabled systemd unit is `/etc/systemd/system/aidumo-b19-mariadb.service`.
    Server UID is `b19-mysql`, socket `/run/aidumo-b19-mariadb/mysql.sock`, TCP
    `127.0.0.1:3306`. It ignores unrelated MySQL option files via `--no-defaults`.
+   Hostname resolution is disabled so TCP `127.0.0.1` fixture accounts do not
+   resolve to the socket-authenticated `localhost` account. After changing a
+   deployed unit, explicitly restart it and verify SQL readiness; rerunning
+   bootstrap alone does not restart an already running service.
 4. Transfer an exact-revision Git bundle from the B executor. Never transfer its
    GitHub token, deploy keys, CODEX auth or agent state. Clone under
    `/home/aidumo/b19/suite`, remove the local bundle remote, verify HEAD and a clean
